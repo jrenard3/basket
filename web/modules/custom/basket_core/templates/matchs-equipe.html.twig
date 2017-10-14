@@ -1,0 +1,37 @@
+<div class="col-md-12">
+    <div class="field_content col-md-6">
+        <div class="field_content_wrapper">
+            <div class="label col-md-12">{{ 'Dernier match'|t }}</div>
+            <div class="content" onclick="document.location='{{ dernier_resultat.url }}';">
+                {% if dernier_resultat %}
+                    <div class="date">{{ 'le @date'|t({'@date': dernier_resultat.date_match}) }}</div>
+                    <div class="adversaire">
+                        {{ 'contre @adversaire'|t({'@adversaire': dernier_resultat.adversaire}) }}
+                    </div>
+                    <div class="score">{{ dernier_resultat.score }}</div>
+                    {% set lieu = (dernier_resultat.dom_ext) ? 'A domicile' : 'A l\'exterieure' %}
+                    <div class="lieu">{{ lieu|t }}</div>
+                {% else %}
+                    <div class="no_match">{{ 'Aucun match résultat'|t }}</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="field_content col-md-6">
+        <div class="field_content_wrapper">
+            <div class="label col-md-12">{{ 'Prochain match'|t }}</div>
+            <div class="content" onclick="document.location='{{ prochain_match.url }}';">
+            {% if prochain_match %}
+                <div class="date">{{ 'le @date'|t({'@date': prochain_match.date_match}) }}</div>
+                <div class="adversaire">{{ 'contre @adversaire'|t({'@adversaire': prochain_match.adversaire}) }}</div>
+                <div class="score">{{ prochain_match.heure_match }}</div>
+                {% set lieu = (prochain_match.dom_ext == 'domicile') ? 'A domicile' : 'A l\'exterieure' %}
+                <div class="lieu">{{ lieu|t }}</div>
+            {% else %}
+                <div class="no_match">{{ 'Aucun match à venir'|t }}</div>
+            {% endif %}
+            </div>
+        </div>
+    </div>
+</div>

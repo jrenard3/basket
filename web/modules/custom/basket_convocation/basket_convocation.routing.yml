@@ -1,0 +1,11 @@
+basket_convocation.form:
+  path: '/match/convocation/{match}'
+  defaults:
+    _form:  '\Drupal\basket_convocation\Form\MatchConvocationForm'
+    _title: 'Convoquer les joueurs pour un match'
+  options:
+    parameters:
+      match:
+        type: entity:matchs
+  requirements:
+    _permission: 'do convocation'

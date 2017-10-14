@@ -1,0 +1,11 @@
+basket_stats.form:
+  path: '/match/statistiques-import/{match}'
+  defaults:
+    _form:  '\Drupal\basket_stats\Form\ImportStats'
+    _title: 'Import des statistiques pour un match'
+  options:
+    parameters:
+      match:
+        type: entity:matchs
+  requirements:
+    _permission: 'import stats'

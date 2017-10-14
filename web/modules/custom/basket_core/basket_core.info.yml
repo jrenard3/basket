@@ -1,0 +1,8 @@
+name: Core
+description: Module core du site BASKET
+package: BASKET
+
+type: module
+core: 8.x
+
+hidden: false

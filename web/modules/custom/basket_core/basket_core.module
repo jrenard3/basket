@@ -1,0 +1,174 @@
+<?php
+
+use Drupal\node\Entity\Node;
+use Drupal\user\Entity\User;
+
+function basket_core_theme() {
+    return array(
+        'equipes' => array(
+            'variables' => array(
+                'equipes' => []
+            ),
+            'template' => 'equipes',
+        ),
+        'match' => array(
+            'variables' => array(
+                'dernier_resultat' => [],
+                'prochain_match' => [],
+            ),
+            'template' => 'matchs-equipe',
+        )
+    );
+}
+
+function basket_core_preprocess_node(&$variables)
+{
+    $node = $variables['node'];
+    
+    if ($node->bundle() == 'joueurs') {
+        if ($node->field_joueur_coordonnees->value == false) {
+            $uid = \Drupal::currentUser()->id();
+            $user = User::load($uid);
+            
+            if (!$user->hasPermission('voir coordonnees')) {
+            }
+        }
+    }
+}
+
+function basket_core_preprocess_field(&$variables)
+{
+    $fields_coordonnees = [
+        'field_joueur_adresse',
+        'field_joueur_telephone',
+        'field_joueur_mail',
+    ];
+    
+    $variables['display'] = true;
+    if (in_array($variables['field_name'], $fields_coordonnees)) {
+        $node = \Drupal::request()->get('node');
+        
+        if (!$node->field_joueurs_coordonnees->value) {
+            $uid = \Drupal::currentUser()->id();
+            $user = User::load($uid);
+    
+            if (!$user->hasPermission('voir coordonnees')) {
+                $variables['display'] = false;
+            }
+        }
+    }
+    
+    if ($variables['field_name'] == 'field_equipe_coachs') {
+        $items = $variables['element']['#items'];
+        $a = 0;
+        while(null !== $coachDatas = $items->get($a)) {
+            $coachValues = $coachDatas->getValue();
+            $coachId = $coachValues['target_id'];
+            
+            $userInfos = User::load($coachId);
+            $variables['coachs'][] = [
+                'nom' => $userInfos->field_user_nom->value,
+                'prenom' => $userInfos->field_user_prenom->value,
+                'tel' => $userInfos->field_user_telephone->value,
+            ];
+            $a++;
+        }
+    }
+
+    if ($variables['field_name'] == 'field_equipe_gymnase') {
+        $adr = $variables['items'][0]['content'];
+        $gmapAdr = [
+            $adr['address_line1']['#value'],
+            $adr['address_line2']['#value'],
+            $adr['postal_code']['#value'],
+            $adr['locality']['#value'],
+            $adr['country_code']['#value'],
+        ];
+        $variables['gmap_address'] = urlencode(implode(', ', $gmapAdr));
+    }
+}
+
+/**
+ * Permet de récupérer la liste des équipes pour une catégorie d'age
+ * @param $categorie_tid
+ */
+function _basket_core_get_equipes($categorie_tid) {
+    $query = \Drupal::entityQuery('node');
+    $query->condition('type', 'equipes');
+    $query->condition('status', NODE_PUBLISHED);
+    $query->condition('field_categorie', $categorie_tid);
+    $query->sort('title', 'ASC');
+    
+    $entity_ids = $query->execute();
+    
+    return $entity_ids;
+}
+
+function _basket_core_get_equipes_matchs($equipe_id) {
+    // On récupère le dernier match avec un score
+    $query = \Drupal::entityQuery('node');
+    $query->condition('type', 'matchs');
+    $query->condition('status', NODE_PUBLISHED);
+    $query->condition('field_equipe_du_club', $equipe_id);
+    $query->condition('field_match_score', '', '<>');
+    $query->sort('field_match_date', 'DESC');
+    $query->range(0,1);
+    
+    $entity_ids = $query->execute();
+    // on récupère le seul résultat
+    $match_id = array_pop($entity_ids);
+    $dernierMatchResultat = false;
+    if (!empty($match_id)) {
+        $dernierMatchResultat = _basket_core_recup_match_informations($match_id);
+    }
+    
+    // Récupération du match à venir
+    // On récupère le dernier match avec un score
+    $query = \Drupal::entityQuery('node');
+    $query->condition('type', 'matchs');
+    $query->condition('status', NODE_PUBLISHED);
+    $query->condition('field_equipe_du_club', $equipe_id);
+    $query->condition('field_match_date', date('Y-m-dTH:i:s'), '>');
+    $query->sort('field_match_date', 'ASC');
+    $query->range(0,1);
+    
+    $entity_ids = $query->execute();
+
+    // on récupère le seul résultat
+    $match_id = array_pop($entity_ids);
+    
+    $prochainMatch = false;
+    if (!empty($match_id)) {
+        $prochainMatch = _basket_core_recup_match_informations($match_id);
+    }
+    
+    return [
+        'dernier_resultat' => $dernierMatchResultat,
+        'prochain_match' => $prochainMatch,
+    ];
+}
+
+function _basket_core_recup_match_informations($nid) {
+    $matchDatas = Node::load($nid);
+    
+    $matchInfos = [
+        'type' => 'dernier_resultat',
+        'equipe_club' => $matchDatas->field_equipe_du_club->entity->getTitle(),
+        'date_match' => _basket_core_conversion_date($matchDatas->field_match_date->value),
+        'heure_match' => _basket_core_conversion_date($matchDatas->field_match_date->value, 'heure'),
+        'dom_ext' => $matchDatas->field_domicile_exterieur->value,
+        'adversaire' => $matchDatas->field_equipe_adverse->value,
+        'score' => $matchDatas->field_match_score->value,
+        'resultat' => $matchDatas->field_match_victoire->value,
+        'url' => $matchDatas->url(),
+    ];
+    
+    return $matchInfos;
+}
+
+function _basket_core_conversion_date($time, $format = 'date') {
+    $timestamp = strtotime($time);
+    $date = ('date' === $format) ? date('d-m-Y', $timestamp) : date('H:i', $timestamp);
+    
+    return $date;
+}

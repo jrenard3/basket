@@ -1,0 +1,8 @@
+{% for e in equipes %}
+    <div class="col-md-12">
+        <div class="equipe-nom"><a href="{{ e.url }}">{{ e.nom }}</a></div>
+        <div class="equipe-matchs">
+            {{ e.matchs }}
+        </div>
+    </div>
+{% endfor %}

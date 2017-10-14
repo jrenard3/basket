@@ -1,0 +1,8 @@
+name: Convocation
+description: Permet de gérer les convocations des joueurs à un match
+package: BASKET
+
+type: module
+core: 8.x
+
+hidden: false

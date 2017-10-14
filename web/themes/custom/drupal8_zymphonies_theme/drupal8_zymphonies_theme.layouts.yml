@@ -1,0 +1,162 @@
+home_page:
+  label: Home Page
+  category: POC Layouts
+  template: layout/homepage
+  icon: templates/layout/icons/layout_homepage.png
+  regions:
+    header:
+      label: 'Header'
+    primary_menu:
+      label: 'Primary Menu'
+    welcome_banner_text:
+      label: 'Welcome Banner Text'
+    topwidget_first:
+      label: 'Top First Widget'
+    topwidget_second:
+      label: 'Top Second Widget'
+    topwidget_third:
+      label: 'Top Third Widget'
+    highlighted:
+      label: 'Highlighted'
+    breadcrumb:
+      label: 'Breadcrumb'
+    content:
+      label: 'Content'
+    bottom_first:
+      label: 'Bottom First Widget'
+    bottom_second:
+      label: 'Bottom Second Widget'
+    bottom_third:
+      label: 'Bottom Third Widget'
+    bottom_forth:
+      label: 'Bottom Forth Widget'
+    footer_first:
+      label: 'Footer First Widget'
+    footer_second:
+      label: 'Footer Second Widget'
+    footer_third:
+      label: 'Footer Third Widget'
+    footer_menu:
+      label: 'Footer Menu'
+    google_map:
+      label: 'Google Map'
+articles:
+  label: Articles
+  category: POC Layouts
+  template: layout/articles
+  icon: templates/layout/icons/layout_article.png
+  regions:
+    header:
+      label: 'Header'
+    primary_menu:
+      label: 'Primary Menu'
+    highlighted:
+      label: 'Highlighted'
+    page_title:
+      label: 'Page Title'
+    breadcrumb:
+      label: 'Breadcrumb'
+    content:
+      label: 'Content'
+    footer_first:
+      label: 'Footer First Widget'
+    footer_second:
+      label: 'Footer Second Widget'
+    footer_third:
+      label: 'Footer Third Widget'
+    footer_menu:
+      label: 'Footer Menu'
+    google_map:
+      label: 'Google Map'
+left_sidebar:
+  label: Left sidebar
+  category: POC Layouts
+  template: layout/leftsidebar
+  icon: templates/layout/icons/layout_leftsidebar.png
+  regions:
+    header:
+      label: 'Header'
+    primary_menu:
+      label: 'Primary Menu'
+    highlighted:
+      label: 'Highlighted'
+    page_title:
+      label: 'Page Title'
+    breadcrumb:
+      label: 'Breadcrumb'
+    content:
+      label: 'Content'
+    sidebar_first:
+      label: 'Left Sidebar'
+    footer_first:
+      label: 'Footer First Widget'
+    footer_second:
+      label: 'Footer Second Widget'
+    footer_third:
+      label: 'Footer Third Widget'
+    footer_menu:
+      label: 'Footer Menu'
+    google_map:
+      label: 'Google Map'
+right_sidebar:
+  label: Right sidebar
+  category: POC Layouts
+  template: layout/rightsidebar
+  icon: templates/layout/icons/layout_rightsidebar.png
+  regions:
+    header:
+      label: 'Header'
+    primary_menu:
+      label: 'Primary Menu'
+    highlighted:
+      label: 'Highlighted'
+    page_title:
+      label: 'Page Title'
+    breadcrumb:
+      label: 'Breadcrumb'
+    content:
+      label: 'Content'
+    sidebar_second:
+      label: 'Right Sidebar'
+    footer_first:
+      label: 'Footer First Widget'
+    footer_second:
+      label: 'Footer Second Widget'
+    footer_third:
+      label: 'Footer Third Widget'
+    footer_menu:
+      label: 'Footer Menu'
+    google_map:
+      label: 'Google Map'
+two_sidebar:
+  label: Two sidebars
+  category: POC Layouts
+  template: layout/twosidebar
+  icon: templates/layout/icons/layout_twosidebar.png
+  regions:
+    header:
+      label: 'Header'
+    primary_menu:
+      label: 'Primary Menu'
+    highlighted:
+      label: 'Highlighted'
+    page_title:
+      label: 'Page Title'
+    breadcrumb:
+      label: 'Breadcrumb'
+    content:
+      label: 'Content'
+    sidebar_first:
+      label: 'Left Sidebar'
+    sidebar_second:
+      label: 'Right Sidebar'
+    footer_first:
+      label: 'Footer First Widget'
+    footer_second:
+      label: 'Footer Second Widget'
+    footer_third:
+      label: 'Footer Third Widget'
+    footer_menu:
+      label: 'Footer Menu'
+    google_map:
+      label: 'Google Map'

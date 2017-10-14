@@ -1,0 +1,3 @@
+import stats:
+  title: "Import les stats d\'un match"
+  description: "Permet d'acceder au formulaire d'import des statistiques pour un match"

@@ -1,0 +1,3 @@
+do convocation:
+  title: 'Créer une convocation'
+  description: "Permet d'acceder au formulaire de convocation des joueurs à un match"
