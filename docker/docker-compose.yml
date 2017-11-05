@@ -1,0 +1,133 @@
+version: "3"
+
+services:
+  mariadb:
+    image: wodby/mariadb:10.1-2.3.3
+    container_name: fribourg_blog_db
+    networks:
+      - fribourg_blog
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: drupal
+      MYSQL_USER: drupal
+      MYSQL_PASSWORD: drupal
+    volumes:
+      - ../config/docker/mysql/dump:/docker-entrypoint-initdb.d
+
+  pma:
+    image: phpmyadmin/phpmyadmin
+    container_name: fribourg_blog_pma
+    networks:
+      - fribourg_blog
+    environment:
+      PMA_HOST: mariadb
+      PMA_USER: drupal
+      PMA_PASSWORD: drupal
+      PHP_UPLOAD_MAX_FILESIZE: 1G
+      PHP_MAX_INPUT_VARS: 1G
+    labels:
+      - traefik.enable=true
+      - traefik.home=true
+      - traefik.backend=pma
+      - traefik.port=80
+      - traefik.frontend.rule=Host:pma.fribourg-blog.localtest.me
+
+  php:
+    image: wodby/drupal-php:7.0-3.0.0
+    container_name: fribourg_blog_php
+    networks:
+      - fribourg_blog
+    environment:
+      PHP_SENDMAIL_PATH: /usr/sbin/sendmail -t -i -S mailhog:1025
+      DB_HOST: mariadb
+      DB_USER: drupal
+      DB_PASSWORD: drupal
+      DB_NAME: drupal
+      DB_DRIVER: mysql
+      PHP_XDEBUG: 1
+      PHP_XDEBUG_REMOTE_HOST: 10.0.75.1
+      PHP_XDEBUG_REMOTE_PORT: 9009
+      PHP_XDEBUG_REMOTE_CONNECT_BACK: 0
+      PHP_FPM_TERMINATE_TIMEOUT: 120
+      PHP_MEMORY_LIMIT: 1024M
+      PHP_CLI_MAX_EXECUTION_TIME: 120
+      APP_ROOT: /var/www/html/web
+    volumes:
+      - ../:/var/www/html
+#      - ../config/docker/php/20-drupal-settings.sh:/docker-entrypoint-init.d/20-drupal-settings.sh
+#      - ../config/docker/php/docker-php.ini.tpl:/etc/gotpl/docker-php.ini.tpl
+#      - ../config/docker/php/zz-www.conf.tpl:/etc/gotpl/zz-www.conf.tpl
+    external_links:
+     - apache:fribourg-blog.localtest.me
+
+  apache:
+    image: wodby/drupal-apache:2.4
+    container_name: fribourg_blog_apache
+    networks:
+      - fribourg_blog
+    depends_on:
+      - php
+    environment:
+      APACHE_LOG_LEVEL: debug
+      APACHE_BACKEND_HOST: php
+      APACHE_SERVER_ROOT: /var/www/html/web
+      APACHE_SERVER_NAME: fribourg-blog.localtest.me
+      APACHE_FCGI_PROXY_CONN_TIMEOUT: 120
+      APACHE_FCGI_PROXY_TIMEOUT: 120
+    volumes:
+      - ../:/var/www/html
+#      - ../config/docker/apache/drupal.conf.tpl:/etc/gotpl/drupal.conf.tpl
+#      - ../config/docker/apache/httpd.conf.tpl:/etc/gotpl/httpd.conf.tpl
+    labels:
+      - traefik.enable=true
+      - traefik.home=true
+      - traefik.port=80
+      - traefik.frontend.rule=Host:fribourg-blog.localtest.me
+
+  mailhog:
+    image: mailhog/mailhog
+    container_name: fribourg_blog_mailhog
+    networks:
+      - fribourg_blog
+    volumes:
+      - ../html:/app
+    labels:
+      - traefik.enable=true
+      - traefik.home=true
+      - traefik.backend=mailhog
+      - traefik.port=8025
+      - traefik.frontend.rule=Host:mailhog.fribourg-blog.localtest.me
+
+#  solr:
+#    image: wodby/drupal-solr:8-5.5-2.2.0
+#    container_name: fribourg_blog_solr
+#    networks:
+#      - fribourg_blog
+#    environment:
+#      SOLR_HEAP: 1024m
+#    volumes:
+#      - ../config/docker/solr/mycores:/opt/solr/server/solr/mycores
+#    labels:
+#      - traefik.enable=true
+#      - traefik.home=true
+#      - traefik.backend=solr
+#      - traefik.port=8983
+#      - traefik.frontend.rule=Host:solr.fribourg-blog.localtest.me
+
+#  tomcat:
+#      image: tomcat:8
+#      container_name: fribourg_blog_tomcat
+#      networks:
+#        - fribourg_blog
+#      volumes:
+#        - ../config/docker/tomcat/tomcat-users.xml:/usr/local/tomcat/conf/tomcat-users.xml:ro
+#        - ../config/docker/tomcat/manager.xml:/usr/local/tomcat/conf/Catalina/localhost/manager.xml:ro
+#      labels:
+#        - traefik.enable=true
+#        - traefik.home=true
+#        - traefik.backend=tomcat
+#        - traefik.port=8080
+#        - traefik.frontend.rule=Host:tomcat.localtest.me
+
+networks:
+  fribourg_blog:
