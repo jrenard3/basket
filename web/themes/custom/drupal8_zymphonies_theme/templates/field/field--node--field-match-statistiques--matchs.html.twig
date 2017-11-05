@@ -1,0 +1,204 @@
+{#
+/**
+ * @file
+ * Theme override for a field.
+ *
+ * To override output, copy the "field.html.twig" from the templates directory
+ * to your theme's directory and customize it, just like customizing other
+ * Drupal templates such as page.html.twig or node.html.twig.
+ *
+ * Instead of overriding the theming for all fields, you can also just override
+ * theming for a subset of fields using
+ * @link themeable Theme hook suggestions. @endlink For example,
+ * here are some theme hook suggestions that can be used for a field_foo field
+ * on an article node type:
+ * - field--node--field-foo--article.html.twig
+ * - field--node--field-foo.html.twig
+ * - field--node--article.html.twig
+ * - field--field-foo.html.twig
+ * - field--text-with-summary.html.twig
+ * - field.html.twig
+ *
+ * Available variables:
+ * - attributes: HTML attributes for the containing element.
+ * - label_hidden: Whether to show the field label or not.
+ * - title_attributes: HTML attributes for the title.
+ * - label: The label for the field.
+ * - multiple: TRUE if a field can contain multiple items.
+ * - items: List of all the field items. Each item contains:
+ *   - attributes: List of HTML attributes for each item.
+ *   - content: The field item's content.
+ * - entity_type: The entity type to which the field belongs.
+ * - field_name: The name of the field.
+ * - field_type: The type of the field.
+ * - label_display: The display settings for the label.
+ *
+ * @see template_preprocess_field()
+ */
+#}
+{% set titles = {
+    'PT_2': 'Tir à 2 points réussi',
+    'PT_3': 'Tir à 3 points réussi',
+    'CH_OUT': 'Sorti du terrain',
+    'CH_IN': 'Entré sur le terrain',
+    'FAUTE': 'Faute personnelle',
+    'LF_KO': 'Lancer franc manqué',
+    'LF_OK': 'Lancer franc réussi',
+    'TM': 'Temps-Mort'
+} %}
+{% set icons = {
+    'PT_2': 'panier',
+    'PT_3': 'panier',
+    'CH_OUT': 'out',
+    'CH_IN': 'in',
+    'FAUTE': 'faute',
+    'LF_KO': 'lf-ok',
+    'LF_OK': 'lf-ko',
+    'TM': 'timeout',
+} %}
+{% set periodes = {
+    'Q1': '1er Quart',
+    'Q2': '2ème Quart',
+    'Q3': '3ème Quart',
+    'Q4': '4ème Quart'
+} %}
+{% set scoreA = 0 %}
+{% set scoreB = 0 %}
+{% set fautesJoueurs = {} %}
+{% set pointsJoueurs = {} %}
+{% set fauteJoueurs = {} %}
+{% set points = {
+    'PT_2': 2,
+    'PT_3': 3,
+    'LF_OK': 1
+} %}
+
+{% if stats %}
+<div{{ attributes.addClass('col-md-12', 'match-stats') }}>
+    <ul class="timeline">
+        {% set sens = stats.equipeClub == 'A' ? '' : 'timeline-inverted' %}
+        <li class="{{ sens }}">
+            <div class="timeline-badge"><i class="glyphicon glyphicon-check"></i></div>
+            <div class="timeline-panel">
+                <div class="timeline-heading">
+                    <h4 class="timeline-title">{{ '5 Majeur'|t }}</h4>
+                </div>
+                <div class="timeline-body">
+                    <p>
+                        <ul>
+                        {% for j in stats['5_majeur'] %}
+                            <li>
+                                <a href="{{ stats.joueurs[j] }}">
+                                    {{ stats.joueurs[j].numero }} - {{ stats.joueurs[j].prenom }} {{ stats.joueurs[j].nom }}
+                                </a>
+                            </li>
+                        {% endfor %}
+                        </ul>
+                    </p>
+                </div>
+            </div>
+        </li>
+        {% for q,quarts in stats.statistiques %}
+        <li>
+            <div class="timeline-badge"><i class="glyphicon glyphicon-check"></i></div>
+            <div class="timeline-panel">
+                <div class="timeline-heading">
+                    <h2 class="timeline-title">{{ periodes[q]|t }}</h2>
+                </div>
+            </div>
+        </li>
+            {% set old_type = '' %}
+            {% for stat in quarts %}
+                {% set displayScore = false %}
+                {% set displayFaute = false %}
+                {% set sens = stat.equipe == 'A' ? '' : 'timeline-inverted' %}
+                {% set title = titles[stat.type] %}
+                {% set icon = icons[stat.type] %}
+                {% set type = stat.type %}
+                {% set equipe = stat.equipe %}
+
+                {% if stat.type in ['PT_2', 'PT_3', 'LF_OK'] %}
+                    {% set nbPts = points[stat.type] %}
+                    {% if stat.equipe == 'A' %}
+                        {% set scoreA = scoreA + nbPts %}
+                    {% else %}
+                        {% set scoreB = scoreB + nbPts %}
+                    {% endif %}
+
+                    {% set displayScore = scoreA ~ ' - ' ~ scoreB %}
+                    {% set ref = stat.ref %}
+                    {% set pointsJoueurs = pointsJoueurs|merge({ref: (pointsJoueurs[ref] + nbPts)}) %}
+                    {% set pointsJoueur = pointsJoueurs[stat.ref] %}
+                {% endif %}
+
+                {% if stat.type == 'FAUTE' %}
+                    {% set displayFaute = true %}
+                    {% set fauteJoueur = fauteJoueurs[stat.ref] + 1 %}
+                {% endif %}
+
+                {% if stats.equipeClub == stat.equipe %}
+                    {% set joueur = stats.joueurs[stat.joueur] %}
+                {% else %}
+                    {% set joueur = stats.joueursAdverses[stat.joueur] %}
+                {% endif %}
+
+                {% if type in ['CH_IN', 'CH_OUT'] %}
+                    {% if old_type not in ['CH_IN', 'CH_OUT'] or equipe != old_equipe %}
+        <li class="{{ sens }} {{ type }}">
+            <div class="timeline-badge"><i class="glyphicon {{ icon }}"></i></div>
+            <div class="timeline-panel">
+                <div class="timeline-heading">
+                    <h4>{{ 'Changements'|t }}</h4>
+                </div>
+
+                <div class="timeline-body">
+                    <a href="{{ stats.joueurs[stat.joueur].url }}">
+                        <span class="{{ type|lower }}"></span>
+                        {{ joueur.numero }} - {{ joueur.prenom }} {{ joueur.nom }}
+                    </a>
+
+                    {% else %}
+                    <br /><a href="{{ stats.joueurs[stat.joueur].url }}">
+                        <span class="{{ type|lower }}"></span>
+                        {{ joueur.numero }} - {{ joueur.prenom }} {{ joueur.nom }}
+                    </a>
+                    {% endif %}
+                {% else %}
+
+                    {% if old_type in ['CH_IN', 'CH_OUT'] %}
+                </div>
+            </div>
+        </li>
+                    {% endif %}
+        <li class="{{ sens }} {{ type }}">
+            <div class="timeline-badge"><i class="glyphicon {{ icon }}"></i></div>
+            <div class="timeline-panel">
+                <div class="timeline-heading">
+                    {% if displayScore %}
+                    <h2>{{ displayScore }}</h2>
+                    {% endif %}
+                    <h4>{{ stat.temps }} - {{ title }}</h4>
+                </div>
+
+                <div class="timeline-body">
+                    <a href="{{ joueur.url }}">
+                        {{ joueur.numero }} - {{ joueur.prenom }} {{ joueur.nom }}
+                        {% if displayScore %}
+                        {{ ' (' ~ pointsJoueur ~ ' Pts)' }}
+                        {% endif %}
+                        {% if displayFaute %}
+                        {{ ', ' ~ fauteJoueur ~ ' faute(s)' }}
+                        {% endif %}
+                    </a>
+                </div>
+
+            </div>
+        </li>
+                {% endif %}
+                {% set old_type = type %}
+                {% set old_equipe = equipe %}
+            {% endfor %}
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}

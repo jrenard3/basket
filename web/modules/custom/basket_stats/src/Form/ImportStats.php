@@ -77,7 +77,7 @@ class ImportStats extends FormBase
             for ($a = 3; $a < count($tab); $a++) {
                 $datas = explode("\t", $tab[$a]);
 
-                if ($datas[4] !== '') {
+                if (isset($datas[4]) && $datas[4] !== '') {
                     $matchDatas[$datas[1]][] = [
                         'equipe' => $datas[3],
                         'infos' => $datas[4],
@@ -100,7 +100,9 @@ class ImportStats extends FormBase
     
             $joueursConvoques[$joueur->id()] = [
                 'id' => $joueur->id(),
-                'nom' => $joueur->field_joueur_nom->value,
+                'nom' => trim($joueur->field_joueur_nom->value),
+                'prenom' => trim($joueur->field_joueur_prenom->value),
+                'url' => $joueur->url(),
                 'numero' => '',
                 'ref' => ''
             ];
@@ -110,6 +112,7 @@ class ImportStats extends FormBase
         // On match les joueurs convoqués avec la feuille de match
         $refJoueurs = [];
         $joueursAssoc = [];
+        $cinqMajeur = [];
         foreach ($matchDatas['Avant match'] as $d => $l) {
             if ($equipe == $l['equipe']) {
                 $e = explode(',', $l['infos']);
@@ -122,6 +125,20 @@ class ImportStats extends FormBase
                             $refJoueurs[$e[0]] = trim($e[1]);
                         }
                     }
+                }
+    
+                if (preg_match('/entré sur le terrain/', $l['infos'])) {
+                    $cinqMajeur[] = $joueursAssoc[$e[0]];
+                }
+            } else {
+                $i = explode(',', $l['infos']);
+                if (!isset($joueursAdverses[$i[0]]) && $i[0][0] == $equipeAutre) {
+                    $joueursAdverses[$i[0]] = [
+                        'id' => $i[0],
+                        'ref' => $i[0],
+                        'nom' => trim($i[1]),
+                        'numero' => str_replace($equipeAutre, '', $i[0]),
+                    ];
                 }
             }
         }
@@ -138,8 +155,12 @@ class ImportStats extends FormBase
                 
                 if (!$evt) {
                 } else {
+                    $refJoueur = isset($joueursAssoc[$evt['ref']])
+                        ? $joueursAssoc[$evt['ref']]
+                        : $joueursAdverses[$evt['ref']]['id'];
+                    
                     $statistiques['Q'.$a][] = [
-                        'joueur' => isset($joueursAssoc[$evt['ref']]) ? $joueursAssoc[$evt['ref']] : 0,
+                        'joueur' => $refJoueur,
                         'type' => $evt['type'],
                         'temps' => $d['temps'],
                         'equipe' => isset($joueursAssoc[$evt['ref']]) ? $equipe : $equipeAutre,
@@ -147,11 +168,19 @@ class ImportStats extends FormBase
                 }
             }
         }
-        echo "<pre>DEBUG " . __FILE__ . " - " . __LINE__ . " <br/>";
-        var_dump($statistiques, $joueursConvoques, $matchDatas);
-        echo "</pre>";
-        die;
-        //$joueursMatch = $matchNode->field
+        
+        // Enregistrement des statistiques du match
+        $stats = [
+            'equipeClub' => $equipe,
+            '5_majeur' => $cinqMajeur,
+            'statistiques' => $statistiques,
+            'joueurs' => $joueursConvoques,
+            'joueursAdverses' => $joueursAdverses,
+            'equipeClub' => $equipe,
+        ];
+
+        $matchNode->set('field_match_statistiques', serialize($stats));
+        $matchNode->save();
     }
     
     /**
@@ -160,16 +189,20 @@ class ImportStats extends FormBase
     public function submitForm(array &$form, FormStateInterface $form_state)
     {
         $values = $form_state->getValues();
+        $matchNode = Node::load($values['match_id']);
+        $url = \Drupal\Core\Url::fromRoute('entity.node.canonical', ['node' => $matchNode->id()]);
+        
+        $form_state->setRedirectUrl($url);
     }
     
     public function getEvenementInformations($evt)
     {
         $evtPreg = array(
             'Tir à 2 points réussi' => 'PT_2',
-            'Tir à 3 points réussi' => 'PT_2',
+            'Tir à 3 points réussi' => 'PT_3',
             'sorti du terrain' => 'CH_OUT',
             'entré sur le terrain' => 'CH_IN',
-            'faute personnelle' => 'FAUTE',
+            'Faute' => 'FAUTE',
             'Lancer franc manqué' => 'LF_KO',
             'Lancer franc réussi' => 'LF_OK',
             'Temps-Mort' => 'TM',
@@ -178,10 +211,17 @@ class ImportStats extends FormBase
         $ret = false;
         
         foreach ($evtPreg as $k => $e) {
-            if (preg_match('/'.$k.'/', $evt[1]) || preg_match('/'.$k.'/', $evt[0])) {
+            if ((isset($evt[1]) && preg_match('/'.$k.'/', $evt[1])) || preg_match('/'.$k.'/', $evt[0])) {
+                if ($e == 'FAUTE') {
+                    $s = explode(' ', $evt[0]);
+                    $ref = $s[count($s) - 1];
+                } else {
+                    $ref = $evt[0];
+                }
+                
                 $ret = [
                     'type' => $e,
-                    'ref' => $evt[0],
+                    'ref' => $ref,
                 ];
                 
                 break;

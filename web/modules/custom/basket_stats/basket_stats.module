@@ -1,0 +1,11 @@
+<?php
+
+function basket_stats_preprocess_field(&$variables)
+{
+    if ($variables['field_name'] == 'field_match_statistiques') {
+        $stats = $variables['items'][0]['content'];
+        $variables['stats'] = unserialize($stats['#context']['value']);
+    
+        $variables['items'][0]['content']['#context'] = '';
+    }
+}
